@@ -1,0 +1,7 @@
+[Webhook]
+Enable = true                           # 是否启用此功能
+Webhook_url = "http://192.168.3.10:5678/webhook/xxxbot"  # 后端Webhook地址
+
+Priority = 50      # 插件优先级,数字越大优先级越低[0-100]
+Robot-names = ["麻了", "智能助手"]      # 根据机器人的昵称自行设置
+
