@@ -240,10 +240,10 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     fileext = fileext_match.group(1)     
                 
                 data={
-                    "title":title,
+                    "Content":title,
                     "md5":md5,
                     "appid":appid,
-                    "attach_id":attach_id,
+                    "attachid":attach_id,
                     "totallen":totallen,
                     "fileext":fileext,
                 }
