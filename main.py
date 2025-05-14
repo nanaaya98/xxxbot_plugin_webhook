@@ -291,7 +291,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
 
             msg = {
                 "MsgId": msg_id,
-                "MsgType": 57,
+                "MsgType": 49,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
                 "IsGroup":is_group,
