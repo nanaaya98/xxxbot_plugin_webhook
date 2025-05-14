@@ -84,13 +84,13 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             else:
                 is_at = "one-one-chat"
             msg = {
-                "msg_id": msg_id,
-                "msg_type": 1,
-                "sender_wxid": sender_wxid,
-                "from_wxid": from_wxid,
-                "is_group":is_group,
-                "is_at": is_at,
-                "content": query,
+                "MsgId": msg_id,
+                "MsgType": 1,
+                "SenderWxid": sender_wxid,
+                "FromWxid": from_wxid,
+                "IsGroup":is_group,
+                "IsAt": is_at,
+                "Content": query,
             }
 
             if is_at == "group-at":
@@ -125,13 +125,13 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             query = query.replace(f"@{self.robotname}", "").strip()
             is_at = "group-at"
             msg = {
-                "msg_id": msg_id,
-                "msg_type": 1,
-                "sender_wxid": sender_wxid,
-                "from_wxid": from_wxid,
-                "is_group":is_group,
-                "is_at": is_at,
-                "content": query,
+                "MsgId": msg_id,
+                "MsgType": 1,
+                "SenderWxid": sender_wxid,
+                "FromWxid": from_wxid,
+                "IsGroup":is_group,
+                "IsAt": is_at,
+                "Content": query,
             }
         logger.info(f"Webhook处理群聊@消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{query}'")
         return await self.send_webhook(msg)
@@ -174,14 +174,14 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     "md5":md5
                 }                
             msg={
-                "msg_id":msg_id,
-                "msg_type":3,
-                "sender_wxid":sender_wxid,
-                "from_wxid":from_wxid,
-                "is_group":is_group,
-                "is_at":is_at,
-                "content":content,
-                "data":data,
+                "MsgId":msg_id,
+                "MsgType":3,
+                "SenderWxid":sender_wxid,
+                "FromWxid":from_wxid,
+                "IsGroup":is_group,
+                "IsAt":is_at,
+                "Content":content,
+                "Data":data,
                 }
         logger.info(f"Webhook处理图片消息: 消息ID:'{msg_id}'，来自: '{from_wxid}',aeskey: '{aeskey}',length: '{length}',md5: '{md5}'")
         return await self.send_webhook(msg)
@@ -250,14 +250,14 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 logger.info(f"Webhook处理文件消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{title}'")
                 
             msg={
-                "msg_id":msg_id,
-                "msg_type":msg_type,
-                "sender_wxid":sender_wxid,
-                "from_wxid":from_wxid,
-                "is_group":is_group,
-                "is_at":is_at,
-                "content":content,
-                "data":data,
+                "MsgId":msg_id,
+                "MsgType":msg_type,
+                "SenderWxid":sender_wxid,
+                "FromWxid":from_wxid,
+                "IsGroup":is_group,
+                "IsAt":is_at,
+                "Content":content,
+                "Data":data,
             }
         return await self.send_webhook(msg)
          
@@ -290,14 +290,14 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 is_at = "one-one-chat"
 
             msg = {
-                "msg_id": msg_id,
-                "msg_type": 57,
-                "sender_wxid": sender_wxid,
-                "from_wxid": from_wxid,
-                "is_group":is_group,
-                "is_at": is_at,
-                "content": query,
-                "quote_data":quote_data
+                "MsgId": msg_id,
+                "MsgType": 57,
+                "SenderWxid": sender_wxid,
+                "FromWxid": from_wxid,
+                "IsGroup":is_group,
+                "IsAt": is_at,
+                "Content": query,
+                "QuotedMessage":quote_data
             }
 
         logger.info(f"Webhook处理引用消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{query}'")
@@ -371,14 +371,14 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             }
 
             msg = {
-                "msg_id": msg_id,
-                "msg_type": 34,
-                "sender_wxid": sender_wxid,
-                "from_wxid": from_wxid,
-                "is_group":is_group,
-                "is_at": is_at,
-                "content": query,
-                "data":data
+                "MsgId": msg_id,
+                "MsgType": 34,
+                "SenderWxid": sender_wxid,
+                "FromWxid": from_wxid,
+                "IsGroup":is_group,
+                "IsAt": is_at,
+                "Content": query,
+                "Data":data
             }
         logger.info(f"Webhook处理语音消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{query}'")
         return await self.send_webhook(msg)
