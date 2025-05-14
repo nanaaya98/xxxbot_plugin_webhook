@@ -29,7 +29,7 @@ Robotname = "麻了"      #机器人昵称，务必设置准确，否则会影�
 
 1. 启用插件后，外部程序监听Webhook_url地址即可接收到微信消息，根据您的需求自行对接api服务来返回消息：http://wx.xianan.xin:1562/
 2. 需要使用语音消息传递时，请先删除XYBot.py文件中689-706附近以下内容（文件位置：根目录\utils）（当前版本XXXBot版本 v1.5.4.2，请自行对照XYBot.py）
-```toml
+```
        if message["IsGroup"] or not message.get("ImgBuf", {}).get("buffer", ""):
             voiceurl, length = None, None
             try:
