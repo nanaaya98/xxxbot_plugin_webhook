@@ -22,7 +22,7 @@
 [Webhook]
 Enable = true                           # 是否启用此功能
 Webhook_url = "http://192.168.3.10:5678/webhook/xxxbot"  # 后端Webhook地址，根据自己实际情况进行调整
-Robotname = "麻了"      #机器人昵称，务必设置准确，否则会影响群聊@消息的收发
+Robotname = "昵称"      #机器人昵称，务必设置准确，否则会影响群聊@消息的收发
 ```
 
 ## 使用方法
