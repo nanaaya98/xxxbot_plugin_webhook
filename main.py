@@ -19,7 +19,6 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     description = "Webhook对接插件"
     author = "喵子柒"
     version = "1.2.0"
-    is_ai_platform = False  # 标记为 AI 平台插件，当对接webhook作为ai平台使用时建议修改为True
 
 ######################################基础配置######################################
     def __init__(self):                    #初始化方法，读取配置文件并设置属性
