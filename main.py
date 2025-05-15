@@ -71,7 +71,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
 
         
 ####################################处理文本消息####################################
-    @on_text_message(priority=50)         #装饰器，指定消息类型和优先级
+    @on_text_message(priority=30)         #装饰器，指定消息类型和优先级
     async def handle_text(self, bot: WechatAPIClient, message: Dict):   #异步处理文本消息的方法
         if not self.enable:
             return None   
@@ -115,7 +115,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 return await self.send_webhook(msg)
 
 ####################################处理@消息####################################
-    @on_at_message(priority=60)         #装饰器，指定消息类型和优先级
+    @on_at_message(priority=30)         #装饰器，指定消息类型和优先级
     async def handle_at(self, bot: WechatAPIClient, message: Dict):   #异步处理文本消息的方法
         # 添加日志记录消息详细信息
         logger.info(f"收到处理@消息请求，消息内容: {message}")
@@ -153,7 +153,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         return await self.send_webhook(msg)
 
 ####################################处理图片消息#################################### 
-    @on_image_message(priority=50)
+    @on_image_message(priority=30)
     async def handle_image(self, bot: WechatAPIClient, message: Dict):
         if not self.enable:
             return  None
@@ -204,7 +204,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         return await self.send_webhook(msg)
 
 ####################################处理文件消息#################################### 
-    @on_xml_message(priority=50)
+    @on_xml_message(priority=30)
     async def handle_xml(self, bot: WechatAPIClient, message: Dict):
         if not self.enable:
             return  None
@@ -279,7 +279,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         return await self.send_webhook(msg)
          
 ####################################处理引用消息#################################### 
-    @on_quote_message(priority=50)         #装饰器，指定消息类型和优先级
+    @on_quote_message(priority=30)         #装饰器，指定消息类型和优先级
     async def handle_quote(self, bot: WechatAPIClient, message: Dict):   #异步处理引用消息的方法
         if not self.enable:
             return None   
@@ -322,7 +322,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         return await self.send_webhook(msg)
 
 ####################################处理语音消息####################################
-    @on_voice_message(priority=50)         #装饰器，指定消息类型和优先级
+    @on_voice_message(priority=30)         #装饰器，指定消息类型和优先级
     async def handle_voice(self, bot: WechatAPIClient, message: Dict):   #异步处理语音消息的方法
         if not self.enable:
             return None   
