@@ -18,7 +18,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     name = "Webhook_XXX"
     description = "Webhook对接插件"
     author = "喵子柒"
-    version = "1.1.0"
+    version = "1.2.0"
     is_ai_platform = False  # 标记为 AI 平台插件，当对接webhook作为ai平台使用时建议修改为True
 
 ######################################基础配置######################################
@@ -32,12 +32,21 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         self.processed_msg_ids = {}  # 将集合改为字典，键为消息 ID，值为处理时间
         self.auth_name="Authorization"
         self.token= None
+        self.wxid = None
 
         # 读取主配置
         with open("main_config.toml", "rb") as f:
             main_config = tomllib.load(f)
             # 获取管理员列表
             self.admins = main_config.get("XYBot", {}).get("admins", [])
+            self.version = main_config.get("Protocol", {}).get("version","849")
+
+            if self.version == "849":
+                self.api_type="VXAPI"
+            elif self.version == "855":
+                self.api_type="api"
+            elif self.version == "ipad":
+                self.api_type="api"
 
         # 读取插件配置
         with open("plugins/Webhook_XXX/config.toml", "rb") as f:
@@ -50,6 +59,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             self.robotname = config["Robotname"]
             self.auth_name = config["Auth_Name"]
             self.token=config["Token"]
+            self.wxid=config["Wxid"]
 
 
     def clean_processed_msg_ids(self, time_window=3600):
@@ -92,6 +102,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType": 1,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
+                "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt": is_at,
                 "Content": query,
@@ -133,6 +144,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType": 1,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
+                "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt": is_at,
                 "Content": query,
@@ -174,7 +186,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     "aeskey":aeskey,
                     "cdnmidimgurl":cdnmidimgurl,
                     "cdnthumbaeskey":cdnthumbaeskey,
-                    "length":length,
+                    "length":int(length),
                     "md5":md5
                 }                
             msg={
@@ -182,6 +194,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType":3,
                 "SenderWxid":sender_wxid,
                 "FromWxid":from_wxid,
+                "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt":is_at,
                 "Content":content,
@@ -213,9 +226,8 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             if message.get("Quote"):
                 return None
             elif not message.get("Quote"):
-
-                msg_type=6,
-                 # 提取title
+                msg_type = 6  
+                # 提取title
                 title_match = re.search(r'<title>(.*?)</title>', xml_content)
                 if title_match:
                     title = title_match.group(1)      
@@ -248,7 +260,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     "md5":md5,
                     "appid":appid,
                     "attachid":attach_id,
-                    "totallen":totallen,
+                    "totallen":int(totallen),
                     "fileext":fileext,
                 }
                 logger.info(f"Webhook处理文件消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{title}'")
@@ -258,6 +270,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType":msg_type,
                 "SenderWxid":sender_wxid,
                 "FromWxid":from_wxid,
+                "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt":is_at,
                 "Content":content,
@@ -299,6 +312,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
                 "IsGroup":is_group,
+                "Wxid":self.wxid,
                 "IsAt": is_at,
                 "Content": query,
                 "QuotedMessage":quote_data
@@ -379,6 +393,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType": 34,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
+                "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt": is_at,
                 "Content": query,
@@ -389,6 +404,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
 
 ####################################调用Webhook####################################              
     async def send_webhook(self, msg):
+        result = None  # 初始化 result 变量
         if self.webhook_url:
             try:
                 headers = {
@@ -401,10 +417,133 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                         if response.status != 200:
                             logger.error(f'Webhook 请求失败，状态码: {response.status}')
                         else:
-                            logger.info(f'Webhook 请求成功，状态码: {response.status}')
+                            
                             result = await response.json()
+                            logger.info(f'Webhook 请求成功，状态码: {response.status}, 响应: {result}')
+
+####################################返回消息####################################
+                            output_type = result.get("output_type",None)
+                            output= result.get("output",None)
+                            res_base_url=f"http://127.0.0.1:9011/{self.api_type}" 
+                            if output_type is not None:
+
+                                ###########################返回文本消息###########################
+                                if output_type == "text":
+                                    if len(output) > 1000:
+                                        if  "[思考结束]" in output:
+                                            parts = output.split("[思考结束]")
+                                            output = parts[1].strip()
+
+                                        soft_limit=300
+                                        fragments = []
+                                        cursor = 0
+                                        output_len = len(output)
+                                            
+                                        while cursor < output_len:
+                                        # 剩余长度不足时直接取剩余部分
+                                            if output_len - cursor <= soft_limit:
+                                                fragments.append(output[cursor:])
+                                                break
+                                            
+                                            search_start = cursor + soft_limit                                            
+                                            newline_pos = output.find('\n\n', search_start)                                                   
+                                            if newline_pos != -1:
+                                                # 包含双换行符本身
+                                                fragments.append(output[cursor:newline_pos + 2])
+                                                cursor = newline_pos + 2  # 移动游标到双换行符之后
+                                            else:
+                                                # 无后续双换行符时取剩余全部
+                                                fragments.append(output[cursor:])
+                                                break
+
+                                        # 检查fragments是否为空
+                                        if not fragments:
+                                            logger.warning("分割后的消息片段为空，跳过发送")
+
+                                        for fragment in fragments:
+                                            current_fragment = fragment
+                                            try:
+                                                res_url=f"{res_base_url}/Msg/SendTxt"
+                                                body={
+                                                    "Wxid":msg["Wxid"],
+                                                    "ToWxid":msg["FromWxid"],
+                                                    "Type":1,
+                                                    "Content":current_fragment,
+                                                    }
+                                                async with aiohttp.ClientSession() as session:
+                                                    async with session.post(res_url, json=body) as response:
+                                                        if response.status!= 200:
+                                                            logger.error(f'Webhook 回复消息失败，状态码: {response.status}')
+                                                        else:
+                                                            logger.info(f'Webhook 回复消息成功，状态码: {response.status}, 响应: {body}')  
+                                                            await asyncio.sleep(2)  # 等待2秒
+                                            except Exception as e:
+                                                logger.error(f' Webhook 回复时请求出错: {e}')  
+                                            
+                                    else:
+                                        try:
+                                            res_url=f"{res_base_url}/Msg/SendTxt"
+                                            body={
+                                                "Wxid":msg["Wxid"],
+                                                "ToWxid":msg["FromWxid"],
+                                                "Type":1,
+                                                "Content":output,
+                                                }
+                                            async with aiohttp.ClientSession() as session:
+                                                async with session.post(res_url, json=body) as response:
+                                                    if response.status!= 200:
+                                                        logger.error(f'Webhook 回复消息失败，状态码: {response.status}')
+                                                    else:
+                                                        logger.info(f'Webhook 回复消息成功，状态码: {response.status}, 响应: {body}')  
+                                        except Exception as e:
+                                            logger.error(f' Webhook 回复时请求出错: {e}')
+                                
+                                ###########################返回图片消息###########################
+                                elif output_type == "image":
+                                    try:
+                                        res_url=f"{res_base_url}/Msg/UploadImg"
+                                        body={
+                                            "Wxid":msg["Wxid"],
+                                            "ToWxid":msg["FromWxid"],
+                                            "Base64":output,
+                                            }
+                                        async with aiohttp.ClientSession() as session:
+                                            async with session.post(res_url, json=body) as response:
+                                                if response.status!= 200:
+                                                    logger.error(f'Webhook 回复消息失败，状态码: {response.status}')
+                                                else:
+                                                    logger.info(f'Webhook 回复消息成功，状态码: {response.status}, 响应: {body}')   
+                                    except Exception as e:
+                                        logger.error(f' Webhook 回复时请求出错: {e}')
+                               
+                                ###########################返回语音消息###########################
+                                elif output_type == "voice":
+                                    try:
+                                        voice_type=result.get("type",None)
+                                        voice_time=result.get("time",None)
+                                        res_url=f"{res_base_url}/Msg/SendVoice"
+                                        body={
+                                            "Wxid":msg["Wxid"],
+                                            "ToWxid":msg["FromWxid"],
+                                            "Type":voice_type,         #Type： AMR = 0, MP3 = 2, SILK = 4, SPEEX = 1, WAVE = 3
+                                            "VoiceTime":voice_time,
+                                            "Base64":output,
+                                            }
+                                        async with aiohttp.ClientSession() as session:
+                                            async with session.post(res_url, json=body) as response:
+                                                if response.status!= 200:
+                                                    logger.error(f'Webhook 回复消息失败，状态码: {response.status}')
+                                                else:
+                                                    logger.info(f'Webhook 回复消息成功，状态码: {response.status}, 响应: {body}')
+                                    except Exception as e:
+                                        logger.error(f' Webhook 回复时请求出错: {e}')
+
+
             except Exception as e:
                 logger.error(f'发送 Webhook 请求时出错: {e}')
         else:
             logger.error('Webhook URL 未设置')
-        return await response.json()
+        
+        return 
+
+
