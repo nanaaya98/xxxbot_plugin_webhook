@@ -30,6 +30,8 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         self.webhook_url = None
         self.robotname = None
         self.processed_msg_ids = {}  # 将集合改为字典，键为消息 ID，值为处理时间
+        self.auth_name="Authorization"
+        self.token= None
 
         # 读取主配置
         with open("main_config.toml", "rb") as f:
@@ -46,6 +48,8 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             self.enable = config["Enable"]
             self.webhook_url = config["Webhook_url"]
             self.robotname = config["Robotname"]
+            self.auth_name = config["Auth_Name"]
+            self.token=config["Token"]
 
 
     def clean_processed_msg_ids(self, time_window=3600):
@@ -387,8 +391,13 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     async def send_webhook(self, msg):
         if self.webhook_url:
             try:
+                headers = {
+                    'Content-Type': 'application/json',  # 基础 JSON 格式声明
+                    f'{self.auth_name}': f'{self.token}',  # 示例：添加认证令牌
+                    }
+                
                 async with aiohttp.ClientSession() as session:
-                    async with session.post(self.webhook_url, json=msg) as response:
+                    async with session.post(self.webhook_url, json=msg,headers=headers) as response:
                         if response.status != 200:
                             logger.error(f'Webhook 请求失败，状态码: {response.status}')
                         else:
