@@ -24,6 +24,9 @@
 Enable = true                           # 是否启用此功能
 Webhook_url = "http://192.168.3.10:5678/webhook/xxxbot"  # 后端Webhook地址，根据自己实际情况进行调整
 Robotname = "昵称"      #机器人昵称，务必设置准确，否则会影响群聊@消息的收发
+#鉴权api
+Auth_Name ="Authorization"    #鉴权方式，请求头中鉴权令牌的键值
+Token="Bearer api-key"        #根据对接平台设置，根据平台api进行设置，如有需要，请根据api请求头要求设置Bearer前缀，保留空格
 ```
 
 ## 使用方法
