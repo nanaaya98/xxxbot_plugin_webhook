@@ -1,0 +1,13 @@
+[Webhook]
+Enable = true                           # 是否启用此功能
+Webhook_url = "http://192.168.3.10:5678/webhook/xxxbot"  # 后端Webhook地址
+
+Robotname = "麻了"      #机器人昵称，务必设置准确，否则会影响群聊@消息的收发
+Wxid = "wxid_27q2wvyh9j1p21"              #机器人Wxid
+
+#鉴权api
+Auth_Name ="Authorization"    #鉴权方式，请求头中鉴权令牌的键值
+Token="Bearer api-key"        #根据对接平台设置，根据平台api进行设置，根据api请求头中需要设置Bearer前缀，保留空格
+
+
+
