@@ -18,7 +18,8 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     name = "Webhook_XXX"
     description = "Webhook对接插件"
     author = "喵子柒"
-    version = "1.2.0"
+    version = "1.2.1"
+    is_ai_platform = True  # 标记为 AI 平台插件，当对接webhook作为ai平台使用时建议修改为True
 
 ######################################基础配置######################################
     def __init__(self):                    #初始化方法，读取配置文件并设置属性
@@ -78,35 +79,38 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             return None   
         else:
             # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")                         
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
+            msg_id = message["MsgId"]                        
+            content = message["Content"]
+            sender_wxid = message["SenderWxid"]
+            from_wxid = message["FromWxid"]
+            is_group = message["IsGroup"]
             msg={ }
             query = content
 
             # 处理特殊空格字符 \\u2005（四分之一em空格）
             if '\\u2005' in query:
                 query = query.replace('\\u2005', " ").strip()
-
             if is_group:    # 是否群聊
                 is_at = "group-chat"
                     # 是否群聊@机器人或私聊
                 if f"@{self.robotname}" in query:
                     query = query.replace(f"@{self.robotname}", "").strip()
+                    
                     is_at = "group-at"
             else:
                 is_at = "one-one-chat"
+            content=f"@{self.robotname} "+query
             msg = {
                 "MsgId": msg_id,
                 "MsgType": 1,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
+                "FromUserName":{"string":from_wxid},
                 "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt": is_at,
-                "Content": query,
+                "Content": content,
+                "Query":query,                
             }
 
             if is_at == "group-at":
@@ -119,18 +123,16 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     @on_at_message(priority=30)         #装饰器，指定消息类型和优先级
     async def handle_at(self, bot: WechatAPIClient, message: Dict):   #异步处理文本消息的方法
         # 添加日志记录消息详细信息
-        logger.info(f"收到处理@消息请求，消息内容: {message}")
         if not self.enable:
             return None   
         else:
             # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")                         
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
+            msg_id = message["MsgId" ]    
+            content = message["Content"]
+            sender_wxid = message["SenderWxid"]
+            from_wxid = message["FromWxid"]
+            is_group = message["IsGroup"]                    
             msg={ }
-
             if msg_id in self.processed_msg_ids:  # 检查消息 ID 是否已经处理过
                 logger.info(f"消息 {msg_id} 已处理，跳过。")
                 return None
@@ -139,6 +141,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
 
             query = content
             query = query.replace(f"@{self.robotname}", "").strip()
+            content=f"@{self.robotname} "+query
             is_at = "group-at"
             msg = {
                 "MsgId": msg_id,
@@ -146,9 +149,11 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
                 "Wxid":self.wxid,
+                "FromUserName":{"string":from_wxid},
                 "IsGroup":is_group,
                 "IsAt": is_at,
-                "Content": query,
+                "Content": content,
+                "Query":query,
             }
         logger.info(f"Webhook处理群聊@消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{query}'")
         return await self.send_webhook(msg)
@@ -160,34 +165,25 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             return  None
         else:
             # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")            
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
+            msg_id = message["MsgId"]    
+            content = message.get("Xml","")
+            sender_wxid = message["SenderWxid"]
+            from_wxid = message["FromWxid"]
+            is_group = message["IsGroup"]
             data = {}
+
+            md5=message["ImageMD5"]
+            path=message["ImagePath"]
+            base64=message["Content"]
 
             if is_group:    # 是否群聊
                 is_at = "group-chat"
             else:
                 is_at = "one-one-chat"
 
-            aeskey, cdnmidimgurl, length, md5 = None, None, None, None
-            
-            root = ET.fromstring(content)
-            img_element = root.find('img')
-            if img_element is not None:
-                aeskey = img_element.get('aeskey')
-                cdnmidimgurl = img_element.get('cdnmidimgurl')
-                cdnthumbaeskey = img_element.get('cdnthumbaeskey')
-                length = img_element.get('length')
-                md5 = img_element.get('md5')
-
                 data={
-                    "aeskey":aeskey,
-                    "cdnmidimgurl":cdnmidimgurl,
-                    "cdnthumbaeskey":cdnthumbaeskey,
-                    "length":int(length),
+                    "base64":base64,
+                    "path":path,
                     "md5":md5
                 }                
             msg={
@@ -196,12 +192,13 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "SenderWxid":sender_wxid,
                 "FromWxid":from_wxid,
                 "Wxid":self.wxid,
+                "FromUserName":{"string":from_wxid},
                 "IsGroup":is_group,
                 "IsAt":is_at,
                 "Content":content,
                 "Data":data,
                 }
-        logger.info(f"Webhook处理图片消息: 消息ID:'{msg_id}'，来自: '{from_wxid}',aeskey: '{aeskey}',length: '{length}',md5: '{md5}'")
+        logger.info(f"Webhook处理图片消息: 消息ID:'{msg_id}'，来自: '{from_wxid}',md5: '{md5}'")
         return await self.send_webhook(msg)
 
 ####################################处理文件消息#################################### 
@@ -211,11 +208,11 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             return  None
         else:
             # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")            
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
+            msg_id = message["MsgId"]
+            content = message["Content"]
+            sender_wxid = message["SenderWxid"]
+            from_wxid = message["FromWxid"]
+            is_group = message["IsGroup"]
             xml_content = content
             msg_type=None
             data = {}
@@ -271,6 +268,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 "MsgType":msg_type,
                 "SenderWxid":sender_wxid,
                 "FromWxid":from_wxid,
+                "FromUserName":{"string":from_wxid},
                 "Wxid":self.wxid,
                 "IsGroup":is_group,
                 "IsAt":is_at,
@@ -286,13 +284,12 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             return None   
         else:
             # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")                         
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
-            quote_data = message.get("Quote", {})
-            msg={ }
+            msg_id = message["MsgId"]  
+            content = message["Content"]
+            sender_wxid = message["SenderWxid"]
+            from_wxid = message["FromWxid"]
+            is_group = message["IsGroup"]
+            quote_data = message["Quote"]
             is_at = "group-chat"
             query = content
             # 处理特殊空格字符 \\u2005（四分之一em空格）
@@ -302,20 +299,22 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             if is_group:    # 是否群聊
                 # 是否群聊@机器人或私聊
                     if f"@{self.robotname}" in query:
-                        query = query.replace(f"@{self.robotname}", "").strip()
+                        query = query.replace(f"@{self.robotname}", "").strip()                      
                         is_at = "group-at"
             else:
                 is_at = "one-one-chat"
-
+            content=f"@{self.robotname} "+query
             msg = {
                 "MsgId": msg_id,
                 "MsgType": 49,
                 "SenderWxid": sender_wxid,
                 "FromWxid": from_wxid,
                 "IsGroup":is_group,
+                "FromUserName":{"string":from_wxid},
                 "Wxid":self.wxid,
                 "IsAt": is_at,
-                "Content": query,
+                "Content": content,
+                "Query":query,
                 "QuotedMessage":quote_data
             }
 
@@ -328,86 +327,18 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         if not self.enable:
             return None   
         else:
-            # 使用正确的消息属性名称
-            msg_id = message.get("MsgId", "")                         
-            content = message.get("Content", "")
-            sender_wxid = message.get("SenderWxid", "")
-            from_wxid = message.get("FromWxid", "")
-            is_group = message.get("IsGroup", False)
-            msg={ }
-            query = content
-
-            if is_group:    # 是否群聊
-                is_at = "group-chat"
-            else:
-                is_at = "one-one-chat"
-            
-            voice_length = None
-            bufid = None
-            voiceformat = None
-            length = None
-            aeskey = None
-            voiceurl = None
- 
-
-            # 提取VoiceLength
-            voicelength_match = re.search(r'voicelength="(\d+)"', query)
-            if voicelength_match:
-                voice_length = int(voicelength_match.group(1))
-        
-            # 提取BufId
-            bufid_match = re.search(r'bufid="([^"]*)"', query)
-            if bufid_match:
-                bufid = bufid_match.group(1)
-
-            # 提取voiceformat
-            voiceformat_match = re.search(r'voiceformat="([^"]*)"', query)
-            if voiceformat_match:
-                voiceformat = voiceformat_match.group(1)
-
-            # 提取Length
-            length_match = re.search(r'length="(\d+)"', query)
-            if length_match:
-                length = int(length_match.group(1))
-
-            # 提取aeskey
-            aeskey_match = re.search(r'aeskey="([^"]*)"', query)
-            if aeskey_match:
-                aeskey = aeskey_match.group(1)   
-            
-            # 提取voiceurl
-            voiceurl_match = re.search(r'voiceurl="([^"]*)"', query)
-            if voiceurl_match:
-                voiceurl = voiceurl_match.group(1)   
-            
-            data={
-                "voice_length":voice_length,
-                "bufid":bufid,
-                "voiceformat":voiceformat,
-                "length":length,
-                "aeskey":aeskey,
-                "voiceurl":voiceurl,    
-            }
-
-            msg = {
-                "MsgId": msg_id,
-                "MsgType": 34,
-                "SenderWxid": sender_wxid,
-                "FromWxid": from_wxid,
-                "Wxid":self.wxid,
-                "IsGroup":is_group,
-                "IsAt": is_at,
-                "Content": query,
-                "Data":data
-            }
-        logger.info(f"Webhook处理语音消息: 消息ID:'{msg_id}'，发送人: '{sender_wxid}'，内容: '{query}'")
+              msg = message
         return await self.send_webhook(msg)
 
 ####################################调用Webhook####################################              
     async def send_webhook(self, msg):
         result = None  # 初始化 result 变量
-        if self.webhook_url:
+        if self.webhook_url:            
             try:
+                if self.token is None:
+                    headers = {
+                        'Content-Type': 'application/json',  # 基础 JSON 格式声明
+                        }
                 headers = {
                     'Content-Type': 'application/json',  # 基础 JSON 格式声明
                     f'{self.auth_name}': f'{self.token}',  # 示例：添加认证令牌
