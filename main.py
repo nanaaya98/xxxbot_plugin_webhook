@@ -327,7 +327,78 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         if not self.enable:
             return None   
         else:
-              msg = message
+            # 使用正确的消息属性名称
+            msg_id = message.get("MsgId", "")                         
+            content = message.get("Content", "")
+            sender_wxid = message.get("SenderWxid", "")
+            from_wxid = message.get("FromWxid", "")
+            is_group = message.get("IsGroup", False)
+            msg={ }
+            query = content
+
+            if is_group:    # 是否群聊
+                is_at = "group-chat"
+            else:
+                is_at = "one-one-chat"
+            
+            voice_length = None
+            bufid = None
+            voiceformat = None
+            length = None
+            aeskey = None
+            voiceurl = None
+ 
+
+            # 提取VoiceLength
+            voicelength_match = re.search(r'voicelength="(\d+)"', query)
+            if voicelength_match:
+                voice_length = int(voicelength_match.group(1))
+        
+            # 提取BufId
+            bufid_match = re.search(r'bufid="([^"]*)"', query)
+            if bufid_match:
+                bufid = bufid_match.group(1)
+
+            # 提取voiceformat
+            voiceformat_match = re.search(r'voiceformat="([^"]*)"', query)
+            if voiceformat_match:
+                voiceformat = voiceformat_match.group(1)
+
+            # 提取Length
+            length_match = re.search(r'length="(\d+)"', query)
+            if length_match:
+                length = int(length_match.group(1))
+
+            # 提取aeskey
+            aeskey_match = re.search(r'aeskey="([^"]*)"', query)
+            if aeskey_match:
+                aeskey = aeskey_match.group(1)   
+            
+            # 提取voiceurl
+            voiceurl_match = re.search(r'voiceurl="([^"]*)"', query)
+            if voiceurl_match:
+                voiceurl = voiceurl_match.group(1)   
+            
+            data={
+                "voice_length":voice_length,
+                "bufid":bufid,
+                "voiceformat":voiceformat,
+                "length":length,
+                "aeskey":aeskey,
+                "voiceurl":voiceurl,    
+            }
+
+            msg = {
+                "MsgId": msg_id,
+                "MsgType": 34,
+                "SenderWxid": sender_wxid,
+                "FromWxid": from_wxid,
+                "Wxid":self.wxid,
+                "IsGroup":is_group,
+                "IsAt": is_at,
+                "Content": query,
+                "Data":data
+            }
         return await self.send_webhook(msg)
 
 ####################################调用Webhook####################################              
