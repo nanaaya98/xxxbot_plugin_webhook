@@ -46,6 +46,8 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 self.api_type="api"
             elif self.version == "ipad":
                 self.api_type="api"
+            elif self.version == "Mac":
+                self.api_type="api"
 
         # 读取插件配置
         with open("plugins/Webhook_XXX/config.toml", "rb") as f:
