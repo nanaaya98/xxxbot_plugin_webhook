@@ -7,7 +7,7 @@ Wxid = "wxid_27q2wvyh9j1p21"              #机器人Wxid
 
 #鉴权api
 Auth_Name ="Authorization"    #鉴权方式，请求头中鉴权令牌的键值
-Token="Bearer api-key"        #根据对接平台设置，根据平台api进行设置，根据api请求头中需要设置Bearer前缀，保留空格
+Token=" "        #根据对接平台设置，根据平台api进行设置，如"Bearer api-key"
 
 
 
