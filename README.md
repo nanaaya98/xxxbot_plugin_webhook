@@ -51,13 +51,13 @@ Token="Bearer api-key"        #根据对接平台设置，根据平台api进行�
 {
     output_type:"voice",
     output:"语音base64",
-    voice_type:0      #AMR = 0, MP3 = 2, SILK = 4, SPEEX = 1, WAVE = 3
-    voice_time:1000   #语音长度
+    voice_type:"MP3"      #AMR, MP3, SILK, WAV
 }
 ```
 
 ## 开发者信息
 
 - 作者：喵子柒
-- 版本：1.2.1
+- 版本：1.2.2
 - 许可证：MIT
+
