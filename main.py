@@ -181,10 +181,10 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             else:
                 is_at = "one-one-chat"
 
-                data={
-                    "base64":base64,
-                    "path":path,
-                    "md5":md5
+            data={
+                "base64":base64,
+                "path":path,
+                "md5":md5
                 }                
             msg={
                 "MsgId":msg_id,
