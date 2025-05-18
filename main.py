@@ -460,10 +460,11 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     current_fragment = fragment
                     try:
                         await bot.send_text_message(msg["FromWxid"], current_fragment)
-                        return False
+                        
                     except Exception as e:
                         logger.error(f' Webhook 回复时请求出错: {e}')  
                         return True
+                return False
                                                                            
             ###########################返回图片消息###########################
             elif output_type == "image":
