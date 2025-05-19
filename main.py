@@ -11,6 +11,11 @@ from utils.plugin_base import PluginBase    #插件必备模块
 from typing import Dict, List, Optional, Union, Any  #类型提示模块
 from loguru import logger                    #日志记录模块
 
+import base64                                #用于Base64编码解码操作
+import wave                                  #用于处理WAV音频文件
+import io                                     #用于输入输出操作
+import argparse                              #用于解析命令行参数
+
 
 
 ################Webhook对接插件，用于将系统与外部服务通过Webhook进行集成################
@@ -369,14 +374,30 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
             voiceurl_match = re.search(r'voiceurl="([^"]*)"', query)
             if voiceurl_match:
                 voiceurl = voiceurl_match.group(1)   
+            silk_base64=""
+            wav_base64=""
+            silk_base64 = await self.bot.download_voice(msg_id, voiceurl, length)
+            audio_data = base64.b64decode(silk_base64)
+            # 创建内存中的WAV文件
+            with io.BytesIO() as wav_buffer:
+                with wave.open(wav_buffer, 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(8000)
+                    wf.writeframes(audio_data)
             
+                # 获取WAV文件的二进制数据
+                wav_binary = wav_buffer.getvalue()
+                # 将WAV二进制数据编码为Base64
+                wav_base64 = base64.b64encode(wav_binary).decode('utf-8')
             data={
                 "voice_length":voice_length,
                 "bufid":bufid,
                 "voiceformat":voiceformat,
                 "length":length,
                 "aeskey":aeskey,
-                "voiceurl":voiceurl,    
+                "voiceurl":voiceurl,   
+                "wav_base64":wav_base64, 
             }
 
             msg = {
@@ -409,22 +430,21 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                             result = await response.json()
                             logger.info(f'Webhook 请求成功，状态码: {response.status}, 响应: {result}')
                             return await self.res_msg(msg,result,bot)
-
             except Exception as e:
                 logger.error(f'发送 Webhook 请求时出错: {e}')
         else:
             logger.error('Webhook URL 未设置')
 
-
 ####################################返回消息####################################
     async def res_msg(self, msg, result,bot: WechatAPIClient):
         output_type = result.get("output_type",None)
-        output= result.get("output",None)
+        
         if output_type is None:
             logger.error(f'Webhook 回复消息失败，未获取到输出类型')
         else:
             ###########################返回文本消息###########################
             if output_type == "text":
+                output= result.get("output",None)
                 if  "[思考结束]" in output:
                     parts = output.split("[思考结束]")
                     output = parts[1].strip()
@@ -468,6 +488,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                                                                            
             ###########################返回图片消息###########################
             elif output_type == "image":
+                output= result.get("output",None)
                 try:
                     await bot.send_image_message(msg["FromWxid"], output)
                     return False
@@ -477,6 +498,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                                
             ###########################返回语音消息###########################
             elif output_type == "voice":
+                output= result.get("output",None)
                 voice_type=result.get("type","mp3")
                 try:
                     await bot.send_voice_message(msg["FromWxid"], voice=output, format=voice_type)
@@ -484,4 +506,25 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 except Exception as e:
                     logger.error(f' Webhook 回复时请求出错: {e}')
                     return True
+            ###########################返回link消息###########################
+            elif output_type == "link":
+                title=result.get("title","文本内容")
+                des=result.get("des","描述内容")
+                msg_url=result.get("msg_url","")
+                thumb_url=result.get("thumb_url","")
+                
+                try:
+                    await bot.send_link_message(msg["FromWxid"],
+                                            title=title,
+                                            description=des,
+                                            url=msg_url,
+                                            thumb_url=thumb_url
+                                            )
+                    return False
+                except Exception as e:
+                    logger.error(f' Webhook 回复时请求出错: {e}')
+                    return True
         
+
+
+
