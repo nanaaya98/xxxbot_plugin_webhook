@@ -95,7 +95,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     is_at = "group-at"
             else:
                 is_at = "one-one-chat"
-            content=f"@{self.robotname} "+query
+            
             msg = {
                 "MsgId": msg_id,
                 "MsgType": 1,
