@@ -10,6 +10,7 @@ from utils.decorators import *              #装饰器模块
 from utils.plugin_base import PluginBase    #插件必备模块
 from typing import Dict, List, Optional, Union, Any  #类型提示模块
 from loguru import logger                    #日志记录模块
+from datetime import datetime               #用于日期和时间操作
 
 import base64                                #用于Base64编码解码操作
 import wave                                  #用于处理WAV音频文件
@@ -23,7 +24,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
     name = "Webhook_XXX"
     description = "Webhook对接插件"
     author = "喵子柒"
-    version = "1.2.2"
+    version = "1.2.5"
     is_ai_platform = True  # 标记为 AI 平台插件，当对接webhook作为ai平台使用时建议修改为True
 
 ######################################基础配置######################################
@@ -47,6 +48,14 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
         with open("main_config.toml", "rb") as f:
             main_config = tomllib.load(f)
             self.admins = main_config.get("XYBot", {}).get("admins", [])
+            self.version = main_config.get("Protocol", {}).get("version","849")
+
+            if self.version == "849":
+                self.api_type="VXAPI"
+            else:
+                self.api_type="api"
+
+
 
     def _load_plugin_config(self):
         with open("plugins/Webhook_XXX/config.toml", "rb") as f:
@@ -93,6 +102,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                 if f"@{self.robotname}" in query:
                     query = query.replace(f"@{self.robotname}", "").strip()                    
                     is_at = "group-at"
+                    content=f"@{self.robotname} "+query
             else:
                 is_at = "one-one-chat"
             
@@ -297,9 +307,10 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     if f"@{self.robotname}" in query:
                         query = query.replace(f"@{self.robotname}", "").strip()                      
                         is_at = "group-at"
+                        content=f"@{self.robotname} "+query
             else:
                 is_at = "one-one-chat"
-            content=f"@{self.robotname} "+query
+            
             msg = {
                 "MsgId": msg_id,
                 "MsgType": 49,
@@ -438,7 +449,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
 ####################################返回消息####################################
     async def res_msg(self, msg, result,bot: WechatAPIClient):
         output_type = result.get("output_type",None)
-        
+        base_url=f'http://127.0.0.1:9011/{self.api_type}'
         if output_type is None:
             logger.error(f'Webhook 回复消息失败，未获取到输出类型')
         else:
@@ -477,7 +488,7 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     await bot.send_text_message(msg["FromWxid"], output)
 
                 for fragment in fragments:
-                    current_fragment = fragment
+                    current_fragment = fragment.replace(f"\n\n", "\n").strip() 
                     try:
                         await bot.send_text_message(msg["FromWxid"], current_fragment)
                         
@@ -508,23 +519,43 @@ class Webhook_XXX(PluginBase):                 #定义Webhook类，继承PluginB
                     return True
             ###########################返回link消息###########################
             elif output_type == "link":
-                title=result.get("title","文本内容")
-                des=result.get("des","描述内容")
-                msg_url=result.get("msg_url","")
-                thumb_url=result.get("thumb_url","")
-                
-                try:
-                    await bot.send_link_message(msg["FromWxid"],
-                                            title=title,
-                                            description=des,
-                                            url=msg_url,
-                                            thumb_url=thumb_url
-                                            )
-                    return False
-                except Exception as e:
-                    logger.error(f' Webhook 回复时请求出错: {e}')
-                    return True
-        
+                output= result.get("output",None)
+                pic_re_url=f'{base_url}/Friend/GetContractDetail' 
+                pic_re_msg={
+                    "Wxid":self.wxid,
+                    "Towxids":self.wxid
+                }
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(pic_re_url, json=pic_re_msg) as response:
+                        json_resp = await response.json()
+                        contact_list = json_resp.get("Data", {}).get("ContactList", [])
+                        thumb_url = contact_list[0].get("SmallHeadImgUrl") if contact_list else None
+                        
+
+                title=f"👏文本内容👏"
+                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                desc=f"点击查看内容\n⌚时间：{now}"
+                simple_xml = f"<appmsg><title>{title}</title><des>{desc}</des><type>5</type><url>{output}</url><thumburl>{thumb_url}</thumburl></appmsg>"
+                res_url=f'{base_url}/Msg/SendApp'
+
+                          
+                res_msg={
+                    "Type": 5,
+                    "Xml": simple_xml,
+                    "ToWxid": msg["FromWxid"],
+                    "Wxid":msg["Wxid"],
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(res_url, json=res_msg) as response:
+                        if response.status != 200:
+                            logger.error(f'Webhook app消息返回失败，状态码: {response.status}')
+                            return True
+                        else:                            
+                            logger.info(f'Webhook app消息返回成功，状态码: {response.status},响应：{res_msg}')
+                            return False        
+
+
 
 
 
